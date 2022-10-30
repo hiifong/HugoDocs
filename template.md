@@ -1,22 +1,3 @@
----
-title: "Hugo Template 文档翻译"
-subtitle: ""
-date: 2022-10-29T17:11:47+08:00
-draft: false
-author: "hiifong"
-authorLink: "https://i.hiifong.cc"
-description: "hiifong的个人博客！"
-license: "CC BY-NC 4.0"
-
-tags:
-- hugo文档翻译
-- hugo doc
-categories:
-- hugo文档
-- hugo文档翻译
-- 翻译
----
-
 # [Template](https://gohugo.io/templates/introduction/)
 
 

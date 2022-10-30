@@ -1,23 +1,3 @@
----
-title: "Hugo Functions文档翻译"
-subtitle: ""
-date: 2022-10-29T19:11:01+08:00
-draft: false
-author: "hiifong"
-authorLink: "https://i.hiifong.cc"
-description: "hiifong的个人博客！"
-license: "CC BY-NC 4.0"
-
-tags:
-- hugo doc
-- hugo文档翻译
-- 翻译
-categories:
-- hugo
-- hugo文档翻译
-- 翻译
----
-
 # [函数](https://gohugo.io/functions/)
 
 Go模板是轻量级的，但可扩展的。Go本身提供了内置函数，包括比较运算符和其他基本工具。这些都列在Go模板文档中。Hugo为基本的模板逻辑添加了额外的函数。
