@@ -1288,3 +1288,363 @@ findRE PATTERN INPUT [LIMIT]
 >   Hugo使用Go的正则表达式包，它与Perl、Python和其他语言使用的一般语法相同，但对于那些来自PCRE背景的人来说有一些小的区别。关于完整的语法列表，请看[GitHub的re2维基](https://github.com/google/re2/wiki/Syntax)。
 
 >   如果你刚开始学习RegEx，或者至少是Go的风味，你可以在浏览器中练习模式匹配，网址是https://regex101.com/。
+
+# `first`
+
+将一个数组切成只有前N个元素。
+
+语法：
+
+```shell
+first LIMIT COLLECTION
+```
+
+`first`的工作方式类似于SQL中的`limit`关键字。它将数组减少到只有前N个元素。它把数组和元素的数量作为输入。
+
+`first`需要两个参数:
+
+1.  `number of elements`
+2.  `array` *or* `slice of maps or structs`
+
+```shell
+# layout/_default/section.html
+
+{{ range first 10 .Pages }}
+    {{ .Render "summary" }}
+{{ end }}
+```
+
+注意：与第一项无关，`LIMIT`可以为'0'，以返回一个空数组。
+
+## 使用`first`和`where`
+
+同时使用`first`和`where`可以非常强大。下面的片段只从主要部分获得一个帖子列表，按标题参数排序，然后只对该列表中的前5个帖子进行排序。
+
+```shell
+# first-and-where-together.html
+{{ range first 5 (where site.RegularPages "Type" "in" site.Params.mainSections).ByTitle }}
+   {{ .Content }}
+{{ end }}
+```
+
+# `float`
+
+从传入函数的参数中创建一个浮点数。
+
+语法：
+
+```shell
+float INPUT
+```
+
+有助于将字符串变成浮点数。
+
+```shell
+{{ float "1.23" }} → 1.23
+```
+
+# `ge`
+
+返回arg1 >= arg2的布尔值。
+
+语法：
+
+```shell
+ge ARG1 ARG2
+```
+
+```shell
+{{ if ge 10 5 }}true{{ end }}
+```
+
+# `getenv`
+
+返回一个环境变量的值，如果环境变量没有被设置，则返回一个空字符串。
+
+语法：
+
+```shell
+os.Getenv VARIABLE
+```
+
+```shell
+getenv VARIABLE
+```
+
+例子：
+
+```shell
+{{ os.Getenv "HOME" }} --> /home/victor
+{{ os.Getenv "USER" }} --> victor
+```
+
+你可以在建立你的网站时传递环境变量：
+
+```shell
+MY_VAR1=foo MY_VAR2=bar hugo
+
+OR
+
+export MY_VAR1=foo
+export MY_VAR2=bar
+hugo
+```
+
+然后在一个模板内检索这些值:
+
+```shell
+{{ os.Getenv "MY_VAR1" }} --> foo
+{{ os.Getenv "MY_VAR2" }} --> bar
+```
+
+# `group`
+
+`group`将一个页面列表分组。
+
+语法：
+
+```shell
+PAGES | group KEY
+```
+
+```html
+<!-- layouts/partials/groups.html -->
+
+{{ $new := .Site.RegularPages | first 10 | group "New" }}
+{{ $old := .Site.RegularPages | last 10 | group "Old" }}
+{{ $groups := slice $new $old }}
+{{ range $groups }}
+<h3>{{ .Key }}{{/* Prints "New", "Old" */}}</h3>
+<ul>
+    {{ range .Pages }}
+    <li>
+    <a href="{{ .Permalink }}">{{ .Title }}</a>
+    <div class="meta">{{ .Date.Format "Mon, Jan 2, 2006" }}</div>
+    </li>
+    {{ end }}
+</ul>
+{{ end }}
+```
+
+你从`group`得到的页面组与你从Hugo中内置的`group`方法得到的类型相同。上面的例子甚至可以进行分页。
+
+# `gt`
+
+返回arg1 > arg2的布尔值。
+
+语法：
+
+```shell
+gt ARG1 ARG2
+```
+
+```shell
+{{ if gt 10 5 }}true{{ end }}
+```
+
+# `hasPrefix`
+
+测试一个字符串是否以前缀开始。
+
+语法：
+
+```shell
+hasPrefix STRING PREFIX
+```
+
+```shell
+{{ hasPrefix "Hugo" "Hu" }} → true
+```
+
+# `highlight`
+
+用语法高亮器渲染代码。
+
+语法：
+
+```shell
+transform.Highlight INPUT LANG [OPTIONS]
+```
+
+```shell
+highlight INPUT LANG [OPTIONS]
+```
+
+高亮功能使用Chroma语法高亮器，支持200多种语言，有40多种可用样式。
+
+## Parameters
+
+**INPUT**
+要突出显示的代码。
+
+**LANG**
+
+要突出显示的代码的语言。从支持的语言中选择一个。不区分大小写。
+
+**OPTIONS**
+
+一个可选的、用逗号隔开的零或多个选项的列表。在站点配置中设置默认值。
+
+## Options
+
+**lineNos**
+
+Boolean. Default is `false`.
+在每一行的开头显示一个数字。
+
+**lineNumbersInTable**
+
+Boolean. Default is `true`.
+在一个有两个单元格的HTML表格中显示高亮显示的代码。左边的表格单元包含行号。右边的表格单元包含代码，允许用户选择和复制没有行号的代码。如果`lineNos`为`false`，则无关紧要。
+
+**anchorLineNos**
+
+Boolean. Default is `false`.
+
+将每个行号渲染成一个HTML锚点元素，并将周围`<span>`的`id`属性设置为行号。如果`lineNos`为`false`，则无关紧要。
+
+**lineAnchors**
+
+String. Default is `""`.
+
+当把行号渲染成HTML锚点元素时，把这个值前置到周围`<span>`的`id`属性上。当一个页面包含两个或多个代码块时，这提供了唯一的id属性。如果`lineNos`或`anchorLineNos`为`false`，则无关紧要。
+
+**lineNoStart**
+
+Integer. Default is `1`.
+显示在第一行开头的数字。如果`lineNos`为`false`，则无关紧要。
+
+**hl_Lines**
+
+String. Default is `""`.
+以空格分隔的要强调的代码行的列表。要强调第2、3、4和7行，将此值设置为`2-4 7`。这个选项与`lineNoStart`选项无关。
+
+**style**
+
+String. Default is `monokai`.
+
+应用于突出显示的代码的CSS样式。参见[样式库](https://xyproto.github.io/splash/docs/)的例子。区分大小写。
+
+**noClasses**
+
+Boolean. Default is `true`.
+
+使用内联CSS样式而不是外部CSS文件。要使用外部CSS文件，请将此值设置为`false`，并使用[hugo客户端生成文件](https://gohugo.io/commands/hugo_gen_chromastyles/)。
+
+**tabWidth**
+
+Integer. Default is `4`.
+
+在你突出显示的代码中，用这个数量的空格代替每个制表符。
+
+**guessSyntax**
+
+Boolean. Default is `false`.
+
+如果`LANG`参数是空的或者是一个不被识别的语言，如果可能的话，自动检测语言，否则就使用后备语言。
+
+>   你可以使用以下速记符号，而不是同时指定`lineNos`和`lineNumbersInTable`
+>
+>   `lineNos=inline`
+>   相当于`lineNos=true`，`lineNumbersInTable=false`
+>   `lineNos=table`
+>   相当于`lineNos=true` 和 `lineNumbersInTable=true`
+
+**例子**:
+
+```shell
+{{ $input := `fmt.Println("Hello World!")` }}
+{{ transform.Highlight $input "go" }}
+
+{{ $input := `console.log('Hello World!');` }}
+{{ $lang := "js" }}
+{{ transform.Highlight $input $lang "lineNos=table, style=api" }}
+
+{{ $input := `echo "Hello World!"` }}
+{{ $lang := "bash" }}
+{{ $options := slice "lineNos=table" "style=dracula" }}
+{{ transform.Highlight $input $lang (delimit $options ",") }}
+```
+
+# `hmac`
+
+返回一个使用密钥签署信息的加密哈希值。
+
+语法:
+
+```shell
+crypto.HMAC HASH_TYPE KEY MESSAGE [ENCODING]
+```
+
+```shell
+hmac HASH_TYPE KEY MESSAGE [ENCODING]
+```
+
+将`HASH_TYPE`参数设置为`md5`, `sha1`, `sha256`, 或 `sha512`。
+
+将可选的`ENCODING`参数设置为十六进制（默认）或二进制。
+
+```shell
+{{ hmac "sha256" "Secret key" "Secret message" }}
+5cceb491f45f8b154e20f3b0a30ed3a6ff3027d373f85c78ffe8983180b03c84
+
+{{ hmac "sha256" "Secret key" "Secret message" "hex" }}
+5cceb491f45f8b154e20f3b0a30ed3a6ff3027d373f85c78ffe8983180b03c84
+
+{{ hmac "sha256" "Secret key" "Secret message" "binary" | base64Encode }}
+XM60kfRfixVOIPOwow7Tpv8wJ9Nz+Fx4/+iYMYCwPIQ=
+```
+
+# `htmlEscape`
+
+返回给定的字符串，并转义保留的HTML代码。
+
+语法:
+
+```shell
+htmlEscape INPUT
+```
+
+在结果中`&`成为`&amp;`等等。它只转义`<`, `>,` `&`, `' `和` "`.
+
+```shell
+{{ htmlEscape "Hugo & Caddy > WordPress & Apache" }} → "Hugo &amp; Caddy &gt; WordPress &amp; Apache"
+```
+
+# `htmlUnescape`
+
+返回给定的HTML转义代码未转义的字符串。
+
+语法:
+
+```shell
+htmlUnescape INPUT
+```
+
+`htmlUnescape` 返回给定的字符串，其中的HTML转义代码没有被转义。
+
+如果需要完全未转义的字符，请记住将此输出传递给 `safeHTML`。否则，输出将被再次转义为正常的字符。
+
+```shell
+{{ htmlUnescape "Hugo &amp; Caddy &gt; WordPress &amp; Apache" }} → "Hugo & Cadd
+```
+
+# `hugo`
+
+`hugo`函数提供了对Hugo相关数据的便捷访问。
+
+语法:
+
+```shell
+hugo
+```
+
+`hugo`返回一个包含以下函数的实例。
+
+**hugo.Generator**
+
+`hugo.Generator`输出一个完整的元数据HTML标签；例如，`<meta name="generator" content="Hugo 0.99.1" />`
+
+**hugo.Version**
+
+你正在使用的Hugo二进制文件的当前版本，例如`0.99.1`。
