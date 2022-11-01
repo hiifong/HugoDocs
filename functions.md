@@ -1648,3 +1648,200 @@ hugo
 **hugo.Version**
 
 你正在使用的Hugo二进制文件的当前版本，例如`0.99.1`。
+
+**hugo.Environment**
+
+通过`--environment` cli标签定义的当前运行环境。
+
+**hugo.CommitHash**
+
+当前Hugo二进制文件的git提交哈希值，例如`0e8bed9ccffba0df554728b46c5bbf6d78ae5247`。
+
+**hugo.BuildDate**
+
+当前Hugo二进制文件的编译日期，格式为RFC 3339，例如：`2002-10-02T10:00:00-05:00`
+
+**hugo.IsExtended**
+
+这是否是扩展的Hugo二进制。
+
+**hugo.IsProduction**
+
+如果`hugo.Environment`被设置为生产环境，则返回`true`。
+
+>   我们强烈建议在您网站的`<head>`中使用`hugo.Generator`。`hugo.Generator`默认包含在`themes.gohugo.io`上托管的所有主题中。发电机标签允许Hugo团队跟踪Hugo的使用情况和受欢迎程度。
+
+## `hugo.Deps`
+
+`hugo.Deps`返回一个项目的依赖性列表（Hugo模块或本地主题组件）。
+
+每个依赖项都包含:
+
+### **Path (string)**
+
+返回该模块的路径。这将是模块的路径，例如 `"github.com/gohugoio/myshortcodes"`，或你的`/theme`文件夹下面的路径，例如` "mytheme"`。
+
+**Version (string)**
+
+该模块的版本。
+
+**Vendor (bool)**
+
+这种依赖关系是否被出售。
+
+**Time (time.Time)**
+
+创建的时间版本。
+
+**Owner**
+
+在依赖关系树中，这是第一个将该模块定义为依赖关系的模块。
+
+**Replace (\*Dependency)**
+
+被这个依赖性所取代。
+
+一个列出依赖关系的例子:
+
+```html
+ <h2>Dependencies</h2>
+<table class="table table-dark">
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">Owner</th>
+      <th scope="col">Path</th>
+      <th scope="col">Version</th>
+      <th scope="col">Time</th>
+      <th scope="col">Vendor</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{ range $index, $element := hugo.Deps }}
+    <tr>
+      <th scope="row">{{ add $index 1 }}</th>
+      <td>{{ with $element.Owner }}{{.Path }}{{ end }}</td>
+      <td>
+        {{ $element.Path }}
+        {{ with $element.Replace}}
+        => {{ .Path }}
+        {{ end }}
+      </td>
+      <td>{{ $element.Version }}</td>
+      <td>{{ with $element.Time }}{{ . }}{{ end }}</td>
+      <td>{{ $element.Vendor }}</td>
+    </tr>
+    {{ end }}
+  </tbody>
+</table>
+```
+
+# `humanize`
+
+返回一个参数的人性化版本，第一个字母大写。
+
+语法：
+
+```shell
+humanize INPUT
+```
+
+如果输入的是一个int64值或者是一个整数的字符串表示，humanize会返回附加了适当序号的数字。
+
+```shell
+{{humanize "my-first-post"}} → "My first post"
+{{humanize "myCamelPost"}} → "My camel post"
+{{humanize "52"}} → "52nd"
+{{humanize 103}} → "103rd"
+```
+
+# `i18n`
+
+根据你的i18n配置文件来翻译一段内容。
+
+语法：
+
+```shell
+i18n KEY
+```
+
+```shell
+T KEY
+```
+
+这是根据你的`i18n/en-US.toml`文件来翻译一段内容。你可以使用`go-i18n`工具来管理你的翻译。翻译可以存在于主题和版本库的根目录中。
+
+```shell
+{{ i18n "translation_id" }}
+```
+
+>   `T`是`i18n`的一个别名。例如，`{{ T "translation_id" }}`。
+
+### Query a flexible translation with variables
+
+通常你会想在翻译字符串中使用页面变量。要做到这一点，在调用`i18n`时要传递`.`context。
+
+```shell
+{{ i18n "wordCount" . }}
+```
+
+该函数将把`.`context传递给` "wordCount "`id:
+
+```yaml
+# i18n/en-US.yaml
+
+wordCount:
+  other: This article has {{ .WordCount }} words.
+```
+
+假设`.WordCount`在上下文中的值是101。其结果将是:
+
+```shell
+This article has 101 words.
+```
+
+有关字符串翻译的更多信息，请参阅[《多语言模式下的字符串翻译》](https://gohugo.io/content-management/multilingual/#translation-of-strings)。
+
+# `Image Filters`
+
+`images`命名空间提供了一个过滤器和其他图像相关功能的列表。
+参见[images.Filter](https://gohugo.io/functions/images/#filter)，了解如何将这些过滤器应用到图像上。
+
+## Overlay
+
+[New in v0.80.0](https://github.com/gohugoio/hugo/releases/tag/v0.80.0)
+
+叠加创建一个过滤器，在x,y位置叠加源图像，例如:
+
+```shell
+{{ $logoFilter := (images.Overlay $logo 50 50 ) }}
+{{ $img := $img | images.Filter $logoFilter }}
+```
+
+如果你只需要应用一次过滤器，则这是上述的一个简短版本:
+
+```shell
+{{ $img := $img.Filter (images.Overlay $logo 50 50 )}}
+```
+
+以上将在`$img`的左上角覆盖`$logo`（在`x=50`，`y=50`的位置）。
+
+## Text 
+
+[New in v0.90.0](https://github.com/gohugoio/hugo/releases/tag/v0.90.0)
+
+使用`Text`过滤器，你可以在图像上添加文本。
+
+下面的例子将以指定的颜色、大小和位置将文字`Hugo rocks！`添加到图片上。
+
+```shell
+{{ $img := resources.Get "/images/background.png"}}
+{{ $img = $img.Filter (images.Text "Hugo rocks!" (dict
+    "color" "#ffffff"
+    "size" 60
+    "linespacing" 2
+    "x" 10
+    "y" 20
+))}}
+```
+
