@@ -1845,3 +1845,327 @@ This article has 101 words.
 ))}}
 ```
 
+如果需要，你可以加载一个自定义字体。将字体作为Hugo资源加载，并将其设置为一个选项。
+
+```shell
+{{ $font := resources.Get "https://github.com/google/fonts/raw/main/apache/roboto/static/Roboto-Black.ttf" }}
+{{ $img := resources.Get "/images/background.png"}}
+{{ $img = $img.Filter (images.Text "Hugo rocks!" (dict
+    "font" $font
+))}}
+```
+
+## **Brightness**
+
+`Brightness`创建一个过滤器，改变图像的亮度。百分比参数必须在（-100，100）范围内。
+
+## ColorBalance
+
+`ColorBalance`创建一个过滤器，改变图像的色彩平衡。每个颜色通道（红、绿、蓝）的百分比参数必须在（-100, 500）范围内。
+
+## Colorize
+
+`Colorize`创建一个过滤器，产生一个图像的彩色版本。色调参数是色轮上的角度，通常在（0，360）范围内。饱和度参数必须在（0，100）范围内。百分比参数指定效果的强度，它必须在（0，100）范围内。
+
+## Contrast
+
+`Contrast`创建一个过滤器，改变图像的对比度。百分比参数必须在（-100，100）范围内。
+
+## Gamma
+
+`Gamma`创建一个过滤器，对图像进行伽玛校正。伽马参数必须是正数。伽玛=1给出原始图像。小于1的伽玛会使图像变暗，大于1的伽玛会使图像变亮。
+
+## GaussianBlur
+
+高斯模糊（GaussianBlur）创建一个过滤器，对图像进行高斯模糊处理。
+
+## Grayscale
+
+`Grayscale`创建一个过滤器，产生一个图像的灰度版本。
+
+## Hue
+
+`Hue`创建一个过滤器，旋转图像的色调。色调角的移动范围通常为-180到180。
+
+## Invert
+
+`Invert`创建一个过滤器，翻转了图像的颜色。
+
+## Pixelate
+
+`Pixelate`创建了一个过滤器，将像素化的效果应用到图像上。
+
+## Saturation
+
+`Saturation`创建一个过滤器，改变图像的饱和度。
+
+## Sepia
+
+`Sepia`创建一个过滤器，产生一个棕褐色的图像版本。
+
+## Sigmoid
+
+`Sigmoid`创建了一个过滤器，它使用一个`sigmoidal`函数改变图像的对比度，并返回调整后的图像。这是一个非线性的对比度变化，对照片调整很有用，因为它保留了高光和阴影的细节。
+
+## UnsharpMask
+
+`UnsharpMask`创建一个滤镜来锐化图像。`sigma`参数用于高斯函数，影响效果的半径。Sigma必须是正数。锐化半径大致等于`3*sigma`。数量参数控制边缘边界变得多深和多浅。通常是在0.5和1.5之间。阈值参数控制将被锐化的最小亮度变化。通常在0到0.05之间。
+
+## Other Functions
+
+### Filter
+
+可用于对图像应用一组过滤器:
+
+```shell
+{{ $img := $img | images.Filter (images.GaussianBlur 6) (images.Pixelate 8) }}
+```
+
+### ImageConfig
+
+解析图像并返回高度、宽度和颜色模型。
+
+`imageConfig`函数接受一个参数，即相对于项目根目录的文件路径（字符串），可以有或没有前导斜线。
+
+```shell
+{{ with (imageConfig "favicon.ico") }}
+favicon.ico: {{.Width}} x {{.Height}}
+{{ end }}
+```
+
+# `in`
+
+检查一个元素是否在一个数组或切片中，或在一个字符串中的子串中，并返回一个布尔值。
+
+语法：
+
+```shell
+in SET ITEM
+```
+
+支持的元素有字符串、整数和浮点数，不过只有float64会如期匹配。
+
+此外，`in`还可以检查一个字符串中是否存在子串。
+
+```shell
+{{ if in .Params.tags "Git" }}Follow me on GitHub!{{ end }}
+```
+
+```shell
+{{ if in "this string contains a substring" "substring" }}Substring found!{{ end }}
+```
+
+# `index`
+
+查找传递给它的数据结构的索引或键。
+
+语法：
+
+```shell
+index COLLECTION INDEXES
+```
+
+```shell
+index COLLECTION KEYS
+```
+
+`index`函数返回其第一个参数被以下参数索引的结果。每个被索引的项目必须是一个地图或一个切片，例如:
+
+```shell
+{{ $slice := slice "a" "b" "c" }}
+{{ index $slice 1 }} => b
+{{ $map := dict "a" 100 "b" 200 }}
+{{ index $map "b" }} => 200
+```
+
+该函数以多个索引为参数，这可以用来获得嵌套的值，例如:
+
+```shell
+{{ $map := dict "a" 100 "b" 200 "c" (slice 10 20 30) }}
+{{ index $map "c" 1 }} => 20
+{{ $map := dict "a" 100 "b" 200 "c" (dict "d" 10 "e" 20) }}
+{{ index $map "c" "e" }} => 20
+```
+
+你可以把多个索引写成一个切片:
+
+```shell
+{{ $map := dict "a" 100 "b" 200 "c" (dict "d" 10 "e" 20) }}
+{{ $slice := slice "c" "e" }}
+{{ index $map $slice }} => 20
+```
+
+## 例子：Load Data from a Path Based on Front Matter Params
+
+假设你想在`content/vacations/`中写的每一篇文章的前言添加一个`location = ""` 字段。你想用这个字段在你的`single.html`模板中的文章底部填入有关位置的信息。你在`data/locations/`中也有一个目录，看起来像下面这样。
+
+```shell
+.
+└── data
+    └── locations
+        ├── abilene.toml
+        ├── chicago.toml
+        ├── oslo.toml
+        └── provo.toml
+```
+
+下面是一个例:
+
+```shell
+# data/locations/oslo.yaml
+ 
+pop_city: 658390
+pop_metro: 1717900
+website: https://www.oslo.kommune.no
+```
+
+我们将使用的例子是一篇关于奥斯陆的文章，其前言应设置为与`data/locations/`中的相应文件名完全相同的名称。
+
+```shell
+title = "My Norwegian Vacation"
+location = "oslo"
+```
+
+`oslo.toml`的内容可以通过以下节点路径从你的模板中访问：`.Site.Data.lots.oslo`。然而，你所需要的具体文件将根据前言的内容而改变。
+
+这就是需要`index`函数的地方。`index`在这个用例中需要2个参数。
+
+ 	1. 节点路径
+ 	2. 一个对应于所需数据的字符串；例如:
+
+```shell
+{{ index .Site.Data.locations “oslo” }}
+```
+
+
+
+`.Params.location`的变量是一个字符串，因此可以取代上面例子中的`oslo`。
+
+```shell
+{{ index .Site.Data.locations .Params.location }}
+=> map[website:https://www.oslo.kommune.no pop_city:658390 pop_metro:1717900]
+```
+
+现在，该调用将根据内容前言中指定的位置返回特定的文件，但你很可能想把特定的属性写到模板中。你可以通过点符号`.`沿着节点路径继续往下走来做到这一点。
+
+```shell
+{{ (index .Site.Data.locations .Params.location).pop_city }}
+=> 658390
+```
+
+# `int`
+
+从传入函数的参数中创建一个`int`。
+
+语法：
+
+```shell
+int INPUT
+```
+
+有助于将字符串变成数字。
+
+```shell
+{{ int "123" }} → 123
+```
+
+>   如果输入的字符串应该代表一个十进制的数字，如果它有前面的0，那么在把字符串传递给`int`函数之前，必须把这些0去掉，否则这个字符串将被尝试解析为一个八进制的数字表示。
+>
+>   `strings.TrimLeft`函数可用于此目的。
+>
+>   ```shell
+>   {{ int ("0987" | strings.TrimLeft "0") }}
+>   {{ int ("00987" | strings.TrimLeft "0") }}
+>   ```
+>
+>   **解释**
+>
+>   `int`函数最终调用了Go库`strconv`中的`ParseInt`函数。
+>
+>   从它的文档来看。
+>
+>   >   基数是由字符串的前缀暗示的：基数16代表 "0x"，基数8代表 "0"，否则就是基数10。
+
+# `intersect`
+
+返回两个数组或切片的共同元素，顺序与第一个数组相同。
+
+语法：
+
+```shell
+intersect SET1 SET2
+```
+
+一个有用的例子是，当与`where`结合时，将其作为`AND`过滤器使用。
+
+## AND filter in where query
+
+```shell
+{{ $pages := where .Site.RegularPages "Type" "not in" (slice "page" "about") }}
+{{ $pages := $pages | union (where .Site.RegularPages "Params.pinned" true) }}
+{{ $pages := $pages | intersect (where .Site.RegularPages "Params.images" "!=" nil) }}
+```
+
+以上是对非`page`或`about`类型的普通页面的检索，除非它们被钉住。最后，我们排除了所有在页面参数中没有设置`images`的页面。
+
+# `isset`
+
+如果该参数被设置，则返回真。
+
+语法：
+
+```shell
+isset COLLECTION INDEX
+```
+
+```shell
+isset COLLECTION KEY
+```
+
+接受一个切片、数组或通道和一个索引或一个map和一个键作为输入。
+
+```shell
+{{ if isset .Params "project_url" }} {{ index .Params "project_url" }}{{ end }}
+```
+
+>   所有站点级的配置键都以小写形式存储。因此，网站配置文件中的`myParam`键值需要用`{{if isset .Site.Params "myparam"}}`访问，而不是`{{if isset .Site.Params "myParam"}}`。注意，你仍然可以用`.Site.Params.myParam`或`.Site.Params.myparam`访问同一个配置键，例如，在使用`with`时。这一限制也适用于从快捷键中访问页面级前言的键。
+
+# `jsonify`
+
+将一个给定的对象编码为JSON。
+
+语法：
+
+```shell
+jsonify INPUT
+```
+
+```shell
+jsonify OPTIONS INPUT
+```
+
+Jsonify将一个给定的对象编码为JSON。
+
+要自定义JSON的打印方式，可以在第一个参数中传递一个选项字典。支持的选项有 "prefix "和 "indent"。输出中的每个JSON元素将在一个新的行中开始，以prefix开始，后面是根据缩进嵌套的一个或多个副本的缩进。
+
+```shell
+{{ dict "title" .Title "content" .Plain | jsonify }}
+{{ dict "title" .Title "content" .Plain | jsonify (dict "indent" "  ") }}
+{{ dict "title" .Title "content" .Plain | jsonify (dict "prefix" " " "indent" "  ") }}
+```
+
+## Jsonify options
+
+**indent ("")**
+
+要使用的缩进。
+
+**prefix ("")**
+
+缩进的前缀。
+
+**noHTMLEscape (false)**
+
+禁止在JSON引号字符串中转义有问题的HTML字符。默认行为是将`&`、`<`和`>`转义为`\u0026`、`\u003c`和`\u003e`，以避免在HTML中嵌入JSON时可能出现的某些安全问题。
+
+也请参见`.PlainWords`、`.Plain`和`.RawContent`页面变量。
