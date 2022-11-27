@@ -2169,3 +2169,239 @@ Jsonify将一个给定的对象编码为JSON。
 禁止在JSON引号字符串中转义有问题的HTML字符。默认行为是将`&`、`<`和`>`转义为`\u0026`、`\u003c`和`\u003e`，以避免在HTML中嵌入JSON时可能出现的某些安全问题。
 
 也请参见`.PlainWords`、`.Plain`和`.RawContent`页面变量。
+
+# `lang`
+
+## `lang.FormatAccounting`
+
+`FormatAccounting` 返回当前语言的会计符号中给定货币和精度的数字的货币表示。
+
+返回值的格式化至少有两个小数位。
+
+语法：
+
+```shell
+lang.FormatAccounting PRECISION, CURRENCY, NUMBER
+```
+
+例子：
+
+```shell
+{{ 512.5032 | lang.FormatAccounting 2 "NOK" }} ---> NOK512.50
+```
+
+## `lang.FormatCurrency`
+
+`FormatCurrency` 返回当前语言中给定货币和精度的数字的货币表示。
+
+返回值的格式化至少有两个小数位。
+
+语法：
+
+```shell
+lang.FormatCurrency PRECISION, CURRENCY, NUMBER
+```
+
+例子：
+
+```shell
+{{ 512.5032 | lang.FormatCurrency 2 "USD" }} ---> $512.50
+```
+
+## `lang.FormatNumber`
+
+`FormatNumber`以给定的精度为当前语言格式化数字。
+
+语法：
+
+```shell
+lang.FormatNumber PRECISION, NUMBER
+```
+
+例子：
+
+```shell
+{{ 512.5032 | lang.FormatNumber 2 }} ---> 512.50
+```
+
+## `lang.FormatNumberCustom`
+
+`FormatNumberCustom`使用负数、十进制和分组选项，以给定的精度格式化一个数字。选项参数是一个字符串，由`<negative> <decimal> <grouping>`组成。默认的选项值是`- . ,`
+
+请注意，数字在5或更大时被四舍五入。因此，在精度设置为0时，1.5变成2，1.4变成1。
+
+对于一个适应当前语言的更简单的函数，见`FormatNumber`。
+
+语法：
+
+```shell
+lang.FormatNumberCustom PRECISION, NUMBER, OPTIONS
+```
+
+例子：
+
+```shell
+{{ lang.FormatNumberCustom 2 12345.6789 }} ---> 12,345.68
+
+{{ lang.FormatNumberCustom 2 12345.6789 "- , ." }} ---> 12.345,68
+
+{{ lang.FormatNumberCustom 6 -12345.6789 "- ." }} ---> -12345.678900
+
+{{ lang.FormatNumberCustom 0 -12345.6789 "- . ," }} ---> -12,346
+
+{{ -98765.4321 | lang.FormatNumberCustom 2 }} ---> -98,765.43
+```
+
+## `lang.FormatPercent`
+
+`FormatPercent`以给定的精度为当前语言格式化数字。请注意，该数字被假定为百分比。
+
+语法：
+
+```shell
+lang.FormatPercent PRECISION, NUMBER
+```
+
+例子：
+
+```shell
+{{ 512.5032 | lang.FormatPercent 2 }} ---> 512.50%
+```
+
+## `lang.Translate`
+
+翻译返回id的翻译字符串。
+
+语法：
+
+```shell
+lang.Translate ID, ARGS
+```
+
+### `Aliases`
+
+i18n, T
+
+# `lang`
+
+## `lang.Merge`
+
+合并来自其他语言的缺失翻译。
+
+语法：
+
+```shell
+lang.Merge FROM TO
+```
+
+例子：
+
+```shell
+{{ $pages := .Site.RegularPages | lang.Merge $frSite.RegularPages | lang.Merge $enSite.RegularPages }}
+```
+
+将 "填补 "当前网站的空白，从左到右是法语网站的内容，最后是英语。
+
+一个更实际的例子是填补其他语言的翻译缺失:
+
+```shell
+{{ $pages := .Site.RegularPages }}
+{{ range .Site.Home.Translations }}
+{{ $pages = $pages | lang.Merge .Site.RegularPages }}
+{{ end }}
+```
+
+# `last`
+
+将一个数组切成只有最后N个元素。
+
+语法：
+
+```shell
+last INDEX COLLECTION
+```
+
+```shell
+{{ range last 10 .Pages }}
+    {{ .Render "summary" }}
+{{ end }}
+```
+
+# `le`
+
+返回arg1 <= arg2的布尔值。
+
+语法：
+
+```shell
+le ARG1 ARG2
+```
+
+```shell
+{{ if le 5 10 }}true{{ end }}
+```
+
+# `len`
+
+根据一个变量的类型，返回其长度。
+
+语法：
+
+```shell
+len INPUT
+```
+
+`len`是Go中的一个内置函数，根据变量的类型返回其长度。来自Go文档:
+
+>   数组：v中元素的数量。
+>
+>   指向数组的指针：*v中的元素数（即使v为nil）。
+>
+>   切片，或map：v中的元素数；如果v为nil，len(v)为0。
+>
+>   字符串：v中的字节数。
+>
+>   通道：通道缓冲区中排队（未读）的元素数；如果v是nil，len(v)为零。
+
+## Example 1: Longer Headings
+
+你可能想根据标题中的字符串的长度给标题添加一个类。下面的模板会检查标题的长度是否大于80个字符，如果是，就在`<h1>`中添加一个长标题类。
+
+```shell
+<header>
+    <h1{{if gt (len .Title) 80}} class="long-title"{{end}}>{{.Title}}</h1>
+</header>
+```
+
+## Example 2: Counting Pages with `where`
+
+下面的模板使用`where`和`len`来计算一个帖子部分的内容`posts`的总数。
+
+```shell
+{{ $posts := (where .Site.RegularPages "Section" "==" "posts") }}
+{{ $postCount := len $posts }}
+```
+
+请注意`.RegularPages`的使用，这是一个网站变量，它计算所有的常规内容页，但不包括用于向列表模板添加前题和内容的`_index.md`页。
+
+# `lower`
+
+将提供的字符串中的所有字符转换为小写。
+
+语法：
+
+```shell
+lower INPUT
+```
+
+```shell
+strings.ToLower INPUT
+```
+
+请注意，在你的模板中可以以多种方式应用`lower`。
+
+```shell
+{{ lower "BatMan" }} → "batman"
+{{ "BatMan" | lower }} → "batman"
+```
+
